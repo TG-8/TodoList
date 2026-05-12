@@ -3,116 +3,294 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Shared TODO</title>
+<title>Todo Board</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f4f6f8;font-family:system-ui;color:#111827}.app{width:min(800px,100%);margin:auto;padding:20px}h1{margin-top:0}.top{display:flex;gap:10px;margin-bottom:12px}input,button{font:inherit;border-radius:12px;border:1px solid #d1d5db;padding:12px}button{cursor:pointer;border:none;font-weight:bold}.blue{background:#2563eb;color:white}.gray{background:#e5e7eb}.red{background:#fee2e2;color:#b91c1c}.green{background:#dcfce7;color:#166534}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tab.active{background:#111827;color:white}.todo{display:grid;grid-template-columns:70px 1fr 50px;gap:8px;align-items:center;background:white;border-radius:16px;padding:10px;margin-bottom:10px}.todo input{width:100%}.hint{color:#6b7280;font-size:13px;margin-top:20px}
+:root{
+  --bg:#f3f5f8;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;
+  --blue:#2563eb;--blue2:#dbeafe;--green:#16a34a;--red:#dc2626;--dark:#111827;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{width:min(980px,100%);margin:0 auto;padding:18px}
+.header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+h1{margin:0;font-size:30px;letter-spacing:-.04em}.sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 24px rgba(15,23,42,.06);padding:14px}
+.row{display:flex;gap:8px;align-items:center}.grid{display:grid;gap:10px}
+button,input,select,textarea{font:inherit;border-radius:12px;border:1px solid var(--line);padding:11px 12px}
+input,select,textarea{background:#fff;color:var(--text);min-width:0}
+button{border:none;cursor:pointer;font-weight:700;white-space:nowrap}
+.primary{background:var(--blue);color:white}.ghost{background:#eef2f7;color:#334155}.danger{background:#fee2e2;color:#991b1b}.done{background:#dcfce7;color:#166534}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;margin-bottom:10px}
+.tab{background:#e5e7eb;color:#374151}.tab.active{background:var(--dark);color:#fff}
+.toolbar{display:grid;grid-template-columns:1fr 135px 105px;gap:8px;margin-bottom:12px}
+.listbar{display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:12px}
+.meta{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin:12px 2px 8px}
+.todos{display:grid;gap:9px}
+.todo{display:grid;grid-template-columns:38px 72px 1fr 105px 42px;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px}
+.todo.dragging{opacity:.45}.handle{background:#eef2f7;color:#475569;cursor:grab;font-size:20px;line-height:1}
+.title{border-color:transparent;background:#f8fafc;width:100%}
+.due{font-size:13px;padding:10px 8px}
+.empty{padding:34px;text-align:center;color:var(--muted);border:1px dashed #cbd5e1;border-radius:18px;background:#fff}
+.status{margin-bottom:12px;padding:10px 12px;border-radius:12px;background:#e0f2fe;color:#075985;font-weight:700;font-size:13px}
+.status.err{background:#fee2e2;color:#991b1b}
+.footer{color:var(--muted);font-size:12px;line-height:1.7;margin-top:14px}
+@media(max-width:720px){
+  .header{display:block}.toolbar{grid-template-columns:1fr}.listbar{grid-template-columns:1fr}
+  .todo{grid-template-columns:34px 62px 1fr 38px}.due{grid-column:3/4}.todo .delete{grid-column:4/5;grid-row:1/3}
+}
 </style>
 </head>
 <body>
 <main class="app">
-<h1>TODOリスト</h1>
-<div class="top"><input id="newListInput" placeholder="新しいリスト名"><button id="addListBtn" class="blue">リスト追加</button></div>
-<div id="tabs" class="tabs"></div>
-<div class="top"><input id="todoInput" placeholder="やること"><button id="addTodoBtn" class="blue">追加</button></div>
-<div id="todoList"></div>
-<p class="hint">完了を押すと削除。<br>複数端末で同期。</p>
+  <header class="header">
+    <div>
+      <h1>Todo Board</h1>
+      <p class="sub">用途別リスト / DB同期 / 並び替え / 完了削除</p>
+    </div>
+    <button id="reloadBtn" class="ghost">再読込</button>
+  </header>
+
+  <div id="status" class="status">起動中...</div>
+
+  <section class="card">
+    <div class="listbar">
+      <input id="newListInput" placeholder="リスト名 例：買い物・仕事・今日やる">
+      <button id="addListBtn" class="primary">リスト追加</button>
+    </div>
+    <div id="tabs" class="tabs"></div>
+  </section>
+
+  <section class="card" style="margin-top:12px">
+    <div class="toolbar">
+      <input id="todoInput" placeholder="TODOを入力">
+      <input id="dueInput" type="date">
+      <button id="addTodoBtn" class="primary">追加</button>
+    </div>
+    <div class="meta">
+      <span id="countText">0件</span>
+      <span>≡ をドラッグで並び替え</span>
+    </div>
+    <div id="todoList" class="todos"></div>
+  </section>
+
+  <p class="footer">完了を押すとDBから削除。複数端末から同じURLで編集可能。3秒ごとに再取得。</p>
 </main>
+
 <script>
 const SUPABASE_URL = "https://pbyadwhnbocdnblqonki.supabase.co/rest/v1/";
 const SUPABASE_ANON_KEY = "sb_publishable_zyatIpbaMCb6m3YkqjrXjA_3Ih4uivT";
+
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const tabs = document.getElementById("tabs");
-const todoList = document.getElementById("todoList");
-const newListInput = document.getElementById("newListInput");
-const addListBtn = document.getElementById("addListBtn");
-const todoInput = document.getElementById("todoInput");
-const addTodoBtn = document.getElementById("addTodoBtn");
+const $ = (id) => document.getElementById(id);
+
+const tabs = $("tabs");
+const todoList = $("todoList");
+const statusEl = $("status");
+const countText = $("countText");
+const newListInput = $("newListInput");
+const todoInput = $("todoInput");
+const dueInput = $("dueInput");
+
 let lists = [];
 let todos = [];
-let selectedListId = null;
-init();
-async function init() {
-  await loadLists();
-  addListBtn.onclick = addList;
-  addTodoBtn.onclick = addTodo;
-  setInterval(loadTodos, 3000);
+let selectedListId = localStorage.getItem("todo.selectedListId");
+let draggingId = null;
+let editing = false;
+
+$("addListBtn").onclick = addList;
+$("addTodoBtn").onclick = addTodo;
+$("reloadBtn").onclick = loadAll;
+todoInput.addEventListener("keydown", e => { if(e.key === "Enter") addTodo(); });
+newListInput.addEventListener("keydown", e => { if(e.key === "Enter") addList(); });
+
+loadAll();
+setInterval(() => { if(!editing && !draggingId) loadTodos(false); }, 3000);
+
+function setStatus(msg, err=false){
+  statusEl.textContent = msg;
+  statusEl.classList.toggle("err", err);
 }
-async function loadLists() {
-  const { data, error } = await client.from("todo_lists").select("*").order("created_at");
-  if (error) return alert(error.message);
-  lists = data || [];
-  if (lists.length === 0) {
-    await client.from("todo_lists").insert([{ name: "今日やる" }, { name: "仕事" }, { name: "買い物" }]);
-    return loadLists();
+
+async function loadAll(){
+  try{
+    const { data, error } = await client.from("todo_lists").select("*").order("sort_order").order("created_at");
+    if(error) throw error;
+    lists = data || [];
+
+    if(lists.length === 0){
+      await client.from("todo_lists").insert([
+        { name:"今日やる", sort_order:1 },
+        { name:"買い物", sort_order:2 },
+        { name:"仕事", sort_order:3 },
+        { name:"私用", sort_order:4 }
+      ]);
+      return loadAll();
+    }
+
+    if(!selectedListId || !lists.some(l => l.id === selectedListId)){
+      selectedListId = lists[0].id;
+      localStorage.setItem("todo.selectedListId", selectedListId);
+    }
+
+    renderLists();
+    await loadTodos(false);
+    setStatus("DB同期済み");
+  }catch(e){
+    setStatus("エラー: " + e.message, true);
   }
-  if (!selectedListId) selectedListId = lists[0].id;
-  renderLists();
-  await loadTodos();
 }
-async function loadTodos() {
-  if (!selectedListId) return;
-  const { data, error } = await client.from("todos").select("*").eq("list_id", selectedListId).order("created_at");
-  if (error) return alert(error.message);
+
+async function loadTodos(showStatus=true){
+  if(!selectedListId) return;
+  const { data, error } = await client.from("todos")
+    .select("*")
+    .eq("list_id", selectedListId)
+    .order("sort_order")
+    .order("created_at");
+
+  if(error){ setStatus("TODO取得エラー: " + error.message, true); return; }
   todos = data || [];
   renderTodos();
+  if(showStatus) setStatus("DB同期済み");
 }
-function renderLists() {
+
+function renderLists(){
   tabs.innerHTML = "";
-  lists.forEach((list) => {
-    const button = document.createElement("button");
-    button.textContent = list.name;
-    button.className = "tab gray";
-    if (list.id === selectedListId) button.classList.add("active");
-    button.onclick = async () => {
+  lists.forEach(list => {
+    const btn = document.createElement("button");
+    btn.className = "tab" + (list.id === selectedListId ? " active" : "");
+    btn.textContent = list.name;
+    btn.onclick = async () => {
       selectedListId = list.id;
+      localStorage.setItem("todo.selectedListId", selectedListId);
       renderLists();
       await loadTodos();
     };
-    tabs.appendChild(button);
+    tabs.appendChild(btn);
   });
 }
-function renderTodos() {
+
+function renderTodos(){
   todoList.innerHTML = "";
-  todos.forEach((todo) => {
+  countText.textContent = `${todos.length}件`;
+
+  if(todos.length === 0){
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "このリストは空";
+    todoList.appendChild(empty);
+    return;
+  }
+
+  todos.forEach(todo => {
     const row = document.createElement("div");
     row.className = "todo";
+    row.draggable = true;
+    row.dataset.id = todo.id;
+
+    const handle = document.createElement("button");
+    handle.className = "handle";
+    handle.textContent = "≡";
+
     const doneBtn = document.createElement("button");
+    doneBtn.className = "done";
     doneBtn.textContent = "完了";
-    doneBtn.className = "green";
-    doneBtn.onclick = async () => {
-      await client.from("todos").delete().eq("id", todo.id);
-      await loadTodos();
+    doneBtn.onclick = () => deleteTodo(todo.id);
+
+    const title = document.createElement("input");
+    title.className = "title";
+    title.value = todo.title;
+    title.onfocus = () => editing = true;
+    title.onblur = async () => {
+      editing = false;
+      const value = title.value.trim() || "無題";
+      if(value !== todo.title){
+        await client.from("todos").update({ title:value }).eq("id", todo.id);
+        await loadTodos(false);
+      }
     };
-    const input = document.createElement("input");
-    input.value = todo.title;
-    input.onchange = async () => {
-      await client.from("todos").update({ title: input.value }).eq("id", todo.id);
+    title.addEventListener("keydown", e => { if(e.key === "Enter") title.blur(); });
+
+    const due = document.createElement("input");
+    due.className = "due";
+    due.type = "date";
+    due.value = todo.due_date || "";
+    due.onchange = async () => {
+      await client.from("todos").update({ due_date: due.value || null }).eq("id", todo.id);
+      await loadTodos(false);
     };
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "×";
-    deleteBtn.className = "red";
-    deleteBtn.onclick = async () => {
-      await client.from("todos").delete().eq("id", todo.id);
-      await loadTodos();
-    };
-    row.append(doneBtn, input, deleteBtn);
+
+    const del = document.createElement("button");
+    del.className = "danger delete";
+    del.textContent = "×";
+    del.onclick = () => deleteTodo(todo.id);
+
+    row.append(handle, doneBtn, title, due, del);
+
+    row.addEventListener("dragstart", () => {
+      draggingId = todo.id;
+      row.classList.add("dragging");
+    });
+    row.addEventListener("dragend", async () => {
+      row.classList.remove("dragging");
+      await saveOrder();
+      draggingId = null;
+    });
+    row.addEventListener("dragover", e => {
+      e.preventDefault();
+      const dragging = todoList.querySelector(".dragging");
+      if(!dragging || dragging === row) return;
+      const rect = row.getBoundingClientRect();
+      const after = e.clientY > rect.top + rect.height / 2;
+      todoList.insertBefore(dragging, after ? row.nextSibling : row);
+    });
+
     todoList.appendChild(row);
   });
 }
-async function addList() {
+
+async function addList(){
   const name = newListInput.value.trim();
-  if (!name) return;
-  await client.from("todo_lists").insert({ name });
+  if(!name) return;
+  const max = lists.length ? Math.max(...lists.map(l => l.sort_order || 0)) : 0;
+  const { data, error } = await client.from("todo_lists").insert({ name, sort_order:max+1 }).select();
+  if(error){ setStatus("リスト追加エラー: " + error.message, true); return; }
   newListInput.value = "";
-  await loadLists();
+  selectedListId = data[0].id;
+  localStorage.setItem("todo.selectedListId", selectedListId);
+  await loadAll();
 }
-async function addTodo() {
+
+async function addTodo(){
   const title = todoInput.value.trim();
-  if (!title) return;
-  await client.from("todos").insert({ title, list_id: selectedListId });
+  if(!title || !selectedListId) return;
+  const max = todos.length ? Math.max(...todos.map(t => t.sort_order || 0)) : 0;
+  const { error } = await client.from("todos").insert({
+    title,
+    list_id:selectedListId,
+    due_date: dueInput.value || null,
+    sort_order:max+1
+  });
+  if(error){ setStatus("TODO追加エラー: " + error.message, true); return; }
   todoInput.value = "";
+  dueInput.value = "";
   await loadTodos();
+}
+
+async function deleteTodo(id){
+  const { error } = await client.from("todos").delete().eq("id", id);
+  if(error){ setStatus("削除エラー: " + error.message, true); return; }
+  todos = todos.filter(t => t.id !== id);
+  renderTodos();
+}
+
+async function saveOrder(){
+  const ids = [...todoList.querySelectorAll(".todo")].map(el => el.dataset.id);
+  for(let i=0;i<ids.length;i++){
+    await client.from("todos").update({ sort_order:i+1 }).eq("id", ids[i]);
+  }
+  await loadTodos(false);
 }
 </script>
 </body>
