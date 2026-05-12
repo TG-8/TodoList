@@ -3,113 +3,145 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Todo Board</title>
+<title>Tasks</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --bg:#f3f5f8;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;
-  --blue:#2563eb;--blue2:#dbeafe;--green:#16a34a;--red:#dc2626;--dark:#111827;
+  --bg:#f8fafd;--surface:#fff;--text:#202124;--sub:#5f6368;--line:#dadce0;
+  --blue:#1a73e8;--hover:#f1f3f4;--danger:#d93025;--green:#188038;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-.app{width:min(980px,100%);margin:0 auto;padding:18px}
-.header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
-h1{margin:0;font-size:30px;letter-spacing:-.04em}.sub{margin:4px 0 0;color:var(--muted);font-size:13px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 24px rgba(15,23,42,.06);padding:14px}
-.row{display:flex;gap:8px;align-items:center}.grid{display:grid;gap:10px}
-button,input,select,textarea{font:inherit;border-radius:12px;border:1px solid var(--line);padding:11px 12px}
-input,select,textarea{background:#fff;color:var(--text);min-width:0}
-button{border:none;cursor:pointer;font-weight:700;white-space:nowrap}
-.primary{background:var(--blue);color:white}.ghost{background:#eef2f7;color:#334155}.danger{background:#fee2e2;color:#991b1b}.done{background:#dcfce7;color:#166534}
-.tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;margin-bottom:10px}
-.tab{background:#e5e7eb;color:#374151}.tab.active{background:var(--dark);color:#fff}
-.toolbar{display:grid;grid-template-columns:1fr 135px 105px;gap:8px;margin-bottom:12px}
-.listbar{display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:12px}
-.meta{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin:12px 2px 8px}
-.todos{display:grid;gap:9px}
-.todo{display:grid;grid-template-columns:38px 72px 1fr 105px 42px;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px}
-.todo.dragging{opacity:.45}.handle{background:#eef2f7;color:#475569;cursor:grab;font-size:20px;line-height:1}
-.title{border-color:transparent;background:#f8fafc;width:100%}
-.due{font-size:13px;padding:10px 8px}
-.empty{padding:34px;text-align:center;color:var(--muted);border:1px dashed #cbd5e1;border-radius:18px;background:#fff}
-.status{margin-bottom:12px;padding:10px 12px;border-radius:12px;background:#e0f2fe;color:#075985;font-weight:700;font-size:13px}
-.status.err{background:#fee2e2;color:#991b1b}
-.footer{color:var(--muted);font-size:12px;line-height:1.7;margin-top:14px}
-@media(max-width:720px){
-  .header{display:block}.toolbar{grid-template-columns:1fr}.listbar{grid-template-columns:1fr}
-  .todo{grid-template-columns:34px 62px 1fr 38px}.due{grid-column:3/4}.todo .delete{grid-column:4/5;grid-row:1/3}
-}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Helvetica Neue",system-ui,sans-serif}
+.app{width:min(780px,100%);margin:0 auto;padding:18px 14px 44px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
+h1{margin:0;font-size:24px;font-weight:500}.sync{color:var(--sub);font-size:12px;margin-top:2px}
+.iconbtn{width:38px;height:38px;border-radius:50%;border:0;background:transparent;cursor:pointer;font-size:18px}
+.iconbtn:hover{background:var(--hover)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 3px rgba(60,64,67,.12);overflow:hidden}
+.lists{display:flex;gap:6px;overflow-x:auto;padding:10px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:transparent;color:var(--sub);padding:9px 12px;border-radius:999px;cursor:pointer;font-weight:600;white-space:nowrap}
+.tab.active{background:#e8f0fe;color:var(--blue)}
+.addList{min-width:40px;color:var(--blue)}
+.addBox{display:grid;grid-template-columns:34px 1fr 88px;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.plus{color:var(--blue);font-size:26px;text-align:center}
+input,textarea,button{font:inherit}
+.taskInput{border:0;outline:0;font-size:15px;padding:10px 0;background:transparent}
+.primary{border:0;border-radius:999px;background:var(--blue);color:#fff;padding:9px 16px;cursor:pointer;font-weight:700}
+.primary:disabled{background:#c7d7f5;cursor:default}
+.controls{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;color:var(--sub);font-size:13px;border-bottom:1px solid var(--line)}
+.toggle{border:0;background:transparent;color:var(--blue);cursor:pointer;font-weight:700}
+.tasks{min-height:180px}
+.task{display:grid;grid-template-columns:42px 1fr 42px;gap:2px;padding:10px 10px;border-bottom:1px solid #edf0f2;background:#fff}
+.task:hover{background:#fcfcfc}.task.dragging{opacity:.45}
+.check{width:22px;height:22px;border:2px solid #80868b;border-radius:50%;margin:8px auto;background:#fff;cursor:pointer}
+.check.done{border-color:var(--green);background:var(--green);color:#fff;display:grid;place-items:center}
+.check.done::before{content:"✓";font-size:14px;font-weight:700}
+.title{border:0;outline:0;background:transparent;width:100%;font-size:15px;padding:7px 0}
+.task.doneTask .title{text-decoration:line-through;color:var(--sub)}
+.details{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--sub);font-size:12px;margin-top:2px}
+.due{border:0;background:#f1f3f4;border-radius:999px;padding:5px 9px;color:var(--sub)}
+.note{border:0;outline:0;resize:vertical;width:100%;min-height:32px;background:transparent;color:var(--sub);font-size:13px;margin-top:5px;padding:4px 0}
+.more{border:0;background:transparent;border-radius:50%;cursor:pointer;font-size:18px;color:var(--sub)}
+.more:hover{background:var(--hover)}
+.handle{cursor:grab;color:#b8bdc3;font-size:18px;padding-top:7px;text-align:center}
+.subtasks{margin-top:8px;display:grid;gap:6px}
+.subtask{display:grid;grid-template-columns:28px 1fr 28px;align-items:center;background:#f8fafd;border-radius:10px;padding:4px}
+.subtask input{border:0;background:transparent;outline:0;font-size:13px;padding:6px}
+.smallCheck{width:16px;height:16px;border:2px solid #9aa0a6;border-radius:50%;margin:auto;cursor:pointer}
+.smallCheck.done{background:var(--green);border-color:var(--green)}
+.smallDelete{border:0;background:transparent;color:var(--sub);cursor:pointer}
+.addSub{border:0;background:transparent;color:var(--blue);font-size:13px;cursor:pointer;padding:6px 0;text-align:left}
+.empty{text-align:center;color:var(--sub);padding:42px 16px}
+.status{margin-bottom:12px;padding:9px 12px;border-radius:12px;background:#e8f0fe;color:#174ea6;font-size:13px;font-weight:700}
+.status.err{background:#fce8e6;color:#a50e0e}
+.dialogBg{position:fixed;inset:0;background:rgba(32,33,36,.35);display:none;place-items:center;padding:16px}
+.dialog{width:min(420px,100%);background:#fff;border-radius:18px;padding:18px;box-shadow:0 8px 28px rgba(0,0,0,.2)}
+.dialog h2{margin:0 0 12px;font-size:20px;font-weight:500}
+.dialog input{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px}
+.dialogActions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.textBtn{border:0;background:transparent;color:var(--blue);font-weight:700;cursor:pointer;padding:9px 12px}
+@media(max-width:640px){.app{padding:12px 8px 36px}.card{border-radius:14px}.addBox{grid-template-columns:30px 1fr 76px}.primary{padding:9px 12px}.task{grid-template-columns:38px 1fr 38px}}
 </style>
 </head>
 <body>
 <main class="app">
-  <header class="header">
-    <div>
-      <h1>Todo Board</h1>
-      <p class="sub">用途別リスト / DB同期 / 並び替え / 完了削除</p>
+  <div class="header">
+    <div class="brand">
+      <div class="logo">✓</div>
+      <div>
+        <h1>Tasks</h1>
+        <div id="syncText" class="sync">起動中...</div>
+      </div>
     </div>
-    <button id="reloadBtn" class="ghost">再読込</button>
-  </header>
+    <button id="reloadBtn" class="iconbtn" title="再読込">↻</button>
+  </div>
 
-  <div id="status" class="status">起動中...</div>
+  <div id="status" class="status">DB接続中...</div>
 
   <section class="card">
-    <div class="listbar">
-      <input id="newListInput" placeholder="リスト名 例：買い物・仕事・今日やる">
-      <button id="addListBtn" class="primary">リスト追加</button>
-    </div>
-    <div id="tabs" class="tabs"></div>
-  </section>
+    <div class="lists" id="listTabs"></div>
 
-  <section class="card" style="margin-top:12px">
-    <div class="toolbar">
-      <input id="todoInput" placeholder="TODOを入力">
-      <input id="dueInput" type="date">
-      <button id="addTodoBtn" class="primary">追加</button>
+    <div class="addBox">
+      <div class="plus">＋</div>
+      <input id="taskInput" class="taskInput" placeholder="タスクを追加">
+      <button id="addTaskBtn" class="primary">追加</button>
     </div>
-    <div class="meta">
+
+    <div class="controls">
       <span id="countText">0件</span>
-      <span>≡ をドラッグで並び替え</span>
+      <button id="toggleDoneBtn" class="toggle">完了済みを表示</button>
     </div>
-    <div id="todoList" class="todos"></div>
-  </section>
 
-  <p class="footer">完了を押すとDBから削除。複数端末から同じURLで編集可能。3秒ごとに再取得。</p>
+    <div id="tasks" class="tasks"></div>
+  </section>
 </main>
+
+<div id="dialogBg" class="dialogBg">
+  <div class="dialog">
+    <h2>リストを追加</h2>
+    <input id="listNameInput" placeholder="リスト名">
+    <div class="dialogActions">
+      <button id="cancelListBtn" class="textBtn">キャンセル</button>
+      <button id="saveListBtn" class="primary">追加</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const SUPABASE_URL = "https://pbyadwhnbocdnblqonki.supabase.co/rest/v1/";
 const SUPABASE_ANON_KEY = "sb_publishable_zyatIpbaMCb6m3YkqjrXjA_3Ih4uivT";
 
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const $ = (id) => document.getElementById(id);
-
-const tabs = $("tabs");
-const todoList = $("todoList");
-const statusEl = $("status");
-const countText = $("countText");
-const newListInput = $("newListInput");
-const todoInput = $("todoInput");
-const dueInput = $("dueInput");
+const $ = id => document.getElementById(id);
 
 let lists = [];
-let todos = [];
-let selectedListId = localStorage.getItem("todo.selectedListId");
+let tasks = [];
+let selectedListId = localStorage.getItem("tasks.selectedListId");
+let showDone = localStorage.getItem("tasks.showDone") === "true";
 let draggingId = null;
 let editing = false;
 
-$("addListBtn").onclick = addList;
-$("addTodoBtn").onclick = addTodo;
 $("reloadBtn").onclick = loadAll;
-todoInput.addEventListener("keydown", e => { if(e.key === "Enter") addTodo(); });
-newListInput.addEventListener("keydown", e => { if(e.key === "Enter") addList(); });
+$("addTaskBtn").onclick = addTask;
+$("taskInput").addEventListener("keydown", e => { if(e.key === "Enter") addTask(); });
+$("toggleDoneBtn").onclick = () => {
+  showDone = !showDone;
+  localStorage.setItem("tasks.showDone", String(showDone));
+  renderTasks();
+};
+$("cancelListBtn").onclick = closeDialog;
+$("saveListBtn").onclick = addList;
+$("listNameInput").addEventListener("keydown", e => { if(e.key === "Enter") addList(); });
 
 loadAll();
-setInterval(() => { if(!editing && !draggingId) loadTodos(false); }, 3000);
+setInterval(() => { if(!editing && !draggingId) loadTasks(false); }, 3000);
 
 function setStatus(msg, err=false){
-  statusEl.textContent = msg;
-  statusEl.classList.toggle("err", err);
+  $("status").textContent = msg;
+  $("syncText").textContent = msg;
+  $("status").classList.toggle("err", err);
 }
 
 async function loadAll(){
@@ -117,180 +149,265 @@ async function loadAll(){
     const { data, error } = await client.from("todo_lists").select("*").order("sort_order").order("created_at");
     if(error) throw error;
     lists = data || [];
-
     if(lists.length === 0){
       await client.from("todo_lists").insert([
-        { name:"今日やる", sort_order:1 },
+        { name:"マイタスク", sort_order:1 },
         { name:"買い物", sort_order:2 },
-        { name:"仕事", sort_order:3 },
-        { name:"私用", sort_order:4 }
+        { name:"仕事", sort_order:3 }
       ]);
       return loadAll();
     }
-
     if(!selectedListId || !lists.some(l => l.id === selectedListId)){
       selectedListId = lists[0].id;
-      localStorage.setItem("todo.selectedListId", selectedListId);
+      localStorage.setItem("tasks.selectedListId", selectedListId);
     }
-
     renderLists();
-    await loadTodos(false);
-    setStatus("DB同期済み");
+    await loadTasks(false);
+    setStatus("同期済み");
   }catch(e){
     setStatus("エラー: " + e.message, true);
   }
 }
 
-async function loadTodos(showStatus=true){
+async function loadTasks(show=true){
   if(!selectedListId) return;
   const { data, error } = await client.from("todos")
-    .select("*")
+    .select("*, subtasks(*)")
     .eq("list_id", selectedListId)
     .order("sort_order")
-    .order("created_at");
-
-  if(error){ setStatus("TODO取得エラー: " + error.message, true); return; }
-  todos = data || [];
-  renderTodos();
-  if(showStatus) setStatus("DB同期済み");
+    .order("created_at")
+    .order("created_at", { foreignTable:"subtasks" });
+  if(error){ setStatus("取得エラー: " + error.message, true); return; }
+  tasks = data || [];
+  renderTasks();
+  if(show) setStatus("同期済み");
 }
 
 function renderLists(){
-  tabs.innerHTML = "";
+  const box = $("listTabs");
+  box.innerHTML = "";
   lists.forEach(list => {
-    const btn = document.createElement("button");
-    btn.className = "tab" + (list.id === selectedListId ? " active" : "");
-    btn.textContent = list.name;
-    btn.onclick = async () => {
+    const b = document.createElement("button");
+    b.className = "tab" + (list.id === selectedListId ? " active" : "");
+    b.textContent = list.name;
+    b.onclick = async () => {
       selectedListId = list.id;
-      localStorage.setItem("todo.selectedListId", selectedListId);
+      localStorage.setItem("tasks.selectedListId", selectedListId);
       renderLists();
-      await loadTodos();
+      await loadTasks();
     };
-    tabs.appendChild(btn);
+    box.appendChild(b);
   });
+  const add = document.createElement("button");
+  add.className = "tab addList";
+  add.textContent = "＋ 新しいリスト";
+  add.onclick = openDialog;
+  box.appendChild(add);
 }
 
-function renderTodos(){
-  todoList.innerHTML = "";
-  countText.textContent = `${todos.length}件`;
+function renderTasks(){
+  const box = $("tasks");
+  const visible = showDone ? tasks : tasks.filter(t => !t.done);
+  const remaining = tasks.filter(t => !t.done).length;
+  $("countText").textContent = `未完了 ${remaining}件 / 全${tasks.length}件`;
+  $("toggleDoneBtn").textContent = showDone ? "完了済みを非表示" : "完了済みを表示";
+  box.innerHTML = "";
 
-  if(todos.length === 0){
+  if(visible.length === 0){
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = "このリストは空";
-    todoList.appendChild(empty);
+    empty.textContent = showDone ? "タスクなし" : "未完了タスクなし";
+    box.appendChild(empty);
     return;
   }
 
-  todos.forEach(todo => {
-    const row = document.createElement("div");
-    row.className = "todo";
-    row.draggable = true;
-    row.dataset.id = todo.id;
+  visible.forEach(task => box.appendChild(createTaskRow(task)));
+}
 
-    const handle = document.createElement("button");
-    handle.className = "handle";
-    handle.textContent = "≡";
+function createTaskRow(task){
+  const row = document.createElement("div");
+  row.className = "task" + (task.done ? " doneTask" : "");
+  row.draggable = true;
+  row.dataset.id = task.id;
 
-    const doneBtn = document.createElement("button");
-    doneBtn.className = "done";
-    doneBtn.textContent = "完了";
-    doneBtn.onclick = () => deleteTodo(todo.id);
+  const left = document.createElement("div");
+  const check = document.createElement("button");
+  check.className = "check" + (task.done ? " done" : "");
+  check.onclick = () => toggleTaskDone(task);
+  left.appendChild(check);
 
-    const title = document.createElement("input");
-    title.className = "title";
-    title.value = todo.title;
-    title.onfocus = () => editing = true;
-    title.onblur = async () => {
-      editing = false;
-      const value = title.value.trim() || "無題";
-      if(value !== todo.title){
-        await client.from("todos").update({ title:value }).eq("id", todo.id);
-        await loadTodos(false);
-      }
-    };
-    title.addEventListener("keydown", e => { if(e.key === "Enter") title.blur(); });
+  const main = document.createElement("div");
 
-    const due = document.createElement("input");
-    due.className = "due";
-    due.type = "date";
-    due.value = todo.due_date || "";
-    due.onchange = async () => {
-      await client.from("todos").update({ due_date: due.value || null }).eq("id", todo.id);
-      await loadTodos(false);
-    };
+  const title = document.createElement("input");
+  title.className = "title";
+  title.value = task.title;
+  title.placeholder = "タスク名";
+  title.onfocus = () => editing = true;
+  title.onblur = async () => {
+    editing = false;
+    const v = title.value.trim() || "無題";
+    if(v !== task.title) await updateTask(task.id, { title:v });
+  };
+  title.addEventListener("keydown", e => { if(e.key === "Enter") title.blur(); });
+  main.appendChild(title);
 
-    const del = document.createElement("button");
-    del.className = "danger delete";
-    del.textContent = "×";
-    del.onclick = () => deleteTodo(todo.id);
+  const details = document.createElement("div");
+  details.className = "details";
+  const due = document.createElement("input");
+  due.type = "date";
+  due.className = "due";
+  due.value = task.due_date || "";
+  due.onchange = async () => updateTask(task.id, { due_date: due.value || null });
+  details.appendChild(due);
+  main.appendChild(details);
 
-    row.append(handle, doneBtn, title, due, del);
+  const note = document.createElement("textarea");
+  note.className = "note";
+  note.placeholder = "詳細を追加";
+  note.value = task.notes || "";
+  note.onfocus = () => editing = true;
+  note.onblur = async () => {
+    editing = false;
+    if(note.value !== (task.notes || "")) await updateTask(task.id, { notes: note.value });
+  };
+  main.appendChild(note);
 
-    row.addEventListener("dragstart", () => {
-      draggingId = todo.id;
-      row.classList.add("dragging");
-    });
-    row.addEventListener("dragend", async () => {
-      row.classList.remove("dragging");
-      await saveOrder();
-      draggingId = null;
-    });
-    row.addEventListener("dragover", e => {
-      e.preventDefault();
-      const dragging = todoList.querySelector(".dragging");
-      if(!dragging || dragging === row) return;
-      const rect = row.getBoundingClientRect();
-      const after = e.clientY > rect.top + rect.height / 2;
-      todoList.insertBefore(dragging, after ? row.nextSibling : row);
-    });
+  const subs = document.createElement("div");
+  subs.className = "subtasks";
+  (task.subtasks || []).forEach(st => subs.appendChild(createSubtaskRow(st)));
+  const addSub = document.createElement("button");
+  addSub.className = "addSub";
+  addSub.textContent = "＋ サブタスクを追加";
+  addSub.onclick = async () => {
+    const title = prompt("サブタスク名");
+    if(!title) return;
+    await client.from("subtasks").insert({ todo_id: task.id, title });
+    await loadTasks(false);
+  };
+  subs.appendChild(addSub);
+  main.appendChild(subs);
 
-    todoList.appendChild(row);
+  const right = document.createElement("div");
+  const handle = document.createElement("div");
+  handle.className = "handle";
+  handle.textContent = "⋮⋮";
+  const del = document.createElement("button");
+  del.className = "more";
+  del.textContent = "×";
+  del.title = "削除";
+  del.onclick = () => deleteTask(task.id);
+  right.append(handle, del);
+
+  row.append(left, main, right);
+
+  row.addEventListener("dragstart", () => { draggingId = task.id; row.classList.add("dragging"); });
+  row.addEventListener("dragend", async () => { row.classList.remove("dragging"); await saveOrder(); draggingId = null; });
+  row.addEventListener("dragover", e => {
+    e.preventDefault();
+    const dragging = $("tasks").querySelector(".dragging");
+    if(!dragging || dragging === row) return;
+    const rect = row.getBoundingClientRect();
+    $("tasks").insertBefore(dragging, e.clientY > rect.top + rect.height/2 ? row.nextSibling : row);
   });
+
+  return row;
+}
+
+function createSubtaskRow(st){
+  const row = document.createElement("div");
+  row.className = "subtask";
+
+  const check = document.createElement("button");
+  check.className = "smallCheck" + (st.done ? " done" : "");
+  check.onclick = async () => {
+    await client.from("subtasks").update({ done: !st.done }).eq("id", st.id);
+    await loadTasks(false);
+  };
+
+  const input = document.createElement("input");
+  input.value = st.title;
+  input.onfocus = () => editing = true;
+  input.onblur = async () => {
+    editing = false;
+    const v = input.value.trim() || "無題";
+    if(v !== st.title){
+      await client.from("subtasks").update({ title:v }).eq("id", st.id);
+      await loadTasks(false);
+    }
+  };
+
+  const del = document.createElement("button");
+  del.className = "smallDelete";
+  del.textContent = "×";
+  del.onclick = async () => {
+    await client.from("subtasks").delete().eq("id", st.id);
+    await loadTasks(false);
+  };
+
+  row.append(check, input, del);
+  return row;
+}
+
+async function addTask(){
+  const title = $("taskInput").value.trim();
+  if(!title || !selectedListId) return;
+  const max = tasks.length ? Math.max(...tasks.map(t => t.sort_order || 0)) : 0;
+  const { error } = await client.from("todos").insert({
+    list_id:selectedListId,
+    title,
+    sort_order:max+1,
+    done:false
+  });
+  if(error){ setStatus("追加エラー: " + error.message, true); return; }
+  $("taskInput").value = "";
+  await loadTasks();
+}
+
+async function toggleTaskDone(task){
+  await updateTask(task.id, { done: !task.done, completed_at: task.done ? null : new Date().toISOString() });
+}
+
+async function updateTask(id, values){
+  const { error } = await client.from("todos").update(values).eq("id", id);
+  if(error){ setStatus("更新エラー: " + error.message, true); return; }
+  await loadTasks(false);
+}
+
+async function deleteTask(id){
+  if(!confirm("このタスクを削除しますか？")) return;
+  const { error } = await client.from("todos").delete().eq("id", id);
+  if(error){ setStatus("削除エラー: " + error.message, true); return; }
+  await loadTasks(false);
+}
+
+async function saveOrder(){
+  const ids = [...$("tasks").querySelectorAll(".task")].map(el => el.dataset.id);
+  for(let i=0;i<ids.length;i++){
+    await client.from("todos").update({ sort_order:i+1 }).eq("id", ids[i]);
+  }
+  await loadTasks(false);
+}
+
+function openDialog(){
+  $("dialogBg").style.display = "grid";
+  $("listNameInput").value = "";
+  setTimeout(() => $("listNameInput").focus(), 0);
+}
+
+function closeDialog(){
+  $("dialogBg").style.display = "none";
 }
 
 async function addList(){
-  const name = newListInput.value.trim();
+  const name = $("listNameInput").value.trim();
   if(!name) return;
   const max = lists.length ? Math.max(...lists.map(l => l.sort_order || 0)) : 0;
   const { data, error } = await client.from("todo_lists").insert({ name, sort_order:max+1 }).select();
   if(error){ setStatus("リスト追加エラー: " + error.message, true); return; }
-  newListInput.value = "";
   selectedListId = data[0].id;
-  localStorage.setItem("todo.selectedListId", selectedListId);
+  localStorage.setItem("tasks.selectedListId", selectedListId);
+  closeDialog();
   await loadAll();
-}
-
-async function addTodo(){
-  const title = todoInput.value.trim();
-  if(!title || !selectedListId) return;
-  const max = todos.length ? Math.max(...todos.map(t => t.sort_order || 0)) : 0;
-  const { error } = await client.from("todos").insert({
-    title,
-    list_id:selectedListId,
-    due_date: dueInput.value || null,
-    sort_order:max+1
-  });
-  if(error){ setStatus("TODO追加エラー: " + error.message, true); return; }
-  todoInput.value = "";
-  dueInput.value = "";
-  await loadTodos();
-}
-
-async function deleteTodo(id){
-  const { error } = await client.from("todos").delete().eq("id", id);
-  if(error){ setStatus("削除エラー: " + error.message, true); return; }
-  todos = todos.filter(t => t.id !== id);
-  renderTodos();
-}
-
-async function saveOrder(){
-  const ids = [...todoList.querySelectorAll(".todo")].map(el => el.dataset.id);
-  for(let i=0;i<ids.length;i++){
-    await client.from("todos").update({ sort_order:i+1 }).eq("id", ids[i]);
-  }
-  await loadTodos(false);
 }
 </script>
 </body>
