@@ -1,150 +1,82 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<link rel="apple-touch-icon" sizes="180x180" href="https://tg-8.github.io/TodoList/apple-touch-icon.png?v=3">
-<link rel="icon" type="image/png" href="https://tg-8.github.io/TodoList/apple-touch-icon.png?v=3">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Tasks</title>
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=5">
+<link rel="icon" type="image/png" href="./apple-touch-icon.png?v=5">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{
-  --bg:#f8fafd;--surface:#fff;--text:#202124;--sub:#5f6368;--line:#dadce0;
-  --blue:#1a73e8;--hover:#f1f3f4;--danger:#d93025;--green:#188038;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Helvetica Neue",system-ui,sans-serif}
-.app{width:min(780px,100%);margin:0 auto;padding:18px 14px 44px}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.brand{display:flex;align-items:center;gap:10px}
-.logo{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
-h1{margin:0;font-size:24px;font-weight:500}.sync{color:var(--sub);font-size:12px;margin-top:2px}
-.iconbtn{width:38px;height:38px;border-radius:50%;border:0;background:transparent;cursor:pointer;font-size:18px}
-.iconbtn:hover{background:var(--hover)}
+:root{--bg:#f8fafd;--surface:#fff;--text:#202124;--sub:#5f6368;--line:#dadce0;--blue:#1a73e8;--hover:#f1f3f4;--danger:#d93025;--green:#188038}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Helvetica Neue",system-ui,sans-serif}
+.app{width:min(820px,100%);margin:0 auto;padding:18px 14px 44px}.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
+h1{margin:0;font-size:24px;font-weight:500}.sync{color:var(--sub);font-size:12px;margin-top:2px}.iconbtn{width:38px;height:38px;border-radius:50%;border:0;background:transparent;cursor:pointer;font-size:18px;color:var(--sub)}.iconbtn:hover{background:var(--hover)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 3px rgba(60,64,67,.12);overflow:hidden}
-.lists{display:flex;gap:6px;overflow-x:auto;padding:10px;border-bottom:1px solid var(--line)}
-.tab{border:0;background:transparent;color:var(--sub);padding:9px 12px;border-radius:999px;cursor:pointer;font-weight:600;white-space:nowrap}
-.tab.active{background:#e8f0fe;color:var(--blue)}
-.addList{min-width:40px;color:var(--blue)}
-.addBox{display:grid;grid-template-columns:34px 1fr 88px;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
-.plus{color:var(--blue);font-size:26px;text-align:center}
-input,textarea,button{font:inherit}
-.taskInput{border:0;outline:0;font-size:15px;padding:10px 0;background:transparent}
-.primary{border:0;border-radius:999px;background:var(--blue);color:#fff;padding:9px 16px;cursor:pointer;font-weight:700}
-.primary:disabled{background:#c7d7f5;cursor:default}
-.controls{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;color:var(--sub);font-size:13px;border-bottom:1px solid var(--line)}
-.toggle{border:0;background:transparent;color:var(--blue);cursor:pointer;font-weight:700}
-.tasks{min-height:180px}
-.task{display:grid;grid-template-columns:42px 1fr 42px;gap:2px;padding:10px 10px;border-bottom:1px solid #edf0f2;background:#fff}
-.task:hover{background:#fcfcfc}.task.dragging{opacity:.45}
-.check{width:22px;height:22px;border:2px solid #80868b;border-radius:50%;margin:8px auto;background:#fff;cursor:pointer}
-.check.done{border-color:var(--green);background:var(--green);color:#fff;display:grid;place-items:center}
-.check.done::before{content:"✓";font-size:14px;font-weight:700}
-.title{border:0;outline:0;background:transparent;width:100%;font-size:15px;padding:7px 0}
-.task.doneTask .title{text-decoration:line-through;color:var(--sub)}
-.details{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--sub);font-size:12px;margin-top:2px}
-.due{border:0;background:#f1f3f4;border-radius:999px;padding:5px 9px;color:var(--sub)}
-.note{border:0;outline:0;resize:vertical;width:100%;min-height:32px;background:transparent;color:var(--sub);font-size:13px;margin-top:5px;padding:4px 0}
-.more{border:0;background:transparent;border-radius:50%;cursor:pointer;font-size:18px;color:var(--sub)}
-.more:hover{background:var(--hover)}
-.handle{cursor:grab;color:#b8bdc3;font-size:18px;padding-top:7px;text-align:center}
-.subtasks{margin-top:8px;display:grid;gap:6px}
-.subtask{display:grid;grid-template-columns:28px 1fr 28px;align-items:center;background:#f8fafd;border-radius:10px;padding:4px}
-.subtask input{border:0;background:transparent;outline:0;font-size:13px;padding:6px}
-.smallCheck{width:16px;height:16px;border:2px solid #9aa0a6;border-radius:50%;margin:auto;cursor:pointer}
-.smallCheck.done{background:var(--green);border-color:var(--green)}
-.smallDelete{border:0;background:transparent;color:var(--sub);cursor:pointer}
-.addSub{border:0;background:transparent;color:var(--blue);font-size:13px;cursor:pointer;padding:6px 0;text-align:left}
-.empty{text-align:center;color:var(--sub);padding:42px 16px}
-.status{margin-bottom:12px;padding:9px 12px;border-radius:12px;background:#e8f0fe;color:#174ea6;font-size:13px;font-weight:700}
-.status.err{background:#fce8e6;color:#a50e0e}
-.dialogBg{position:fixed;inset:0;background:rgba(32,33,36,.35);display:none;place-items:center;padding:16px}
-.dialog{width:min(420px,100%);background:#fff;border-radius:18px;padding:18px;box-shadow:0 8px 28px rgba(0,0,0,.2)}
-.dialog h2{margin:0 0 12px;font-size:20px;font-weight:500}
-.dialog input{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px}
-.dialogActions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
-.textBtn{border:0;background:transparent;color:var(--blue);font-weight:700;cursor:pointer;padding:9px 12px}
-@media(max-width:640px){.app{padding:12px 8px 36px}.card{border-radius:14px}.addBox{grid-template-columns:30px 1fr 76px}.primary{padding:9px 12px}.task{grid-template-columns:38px 1fr 38px}}
+.lists{display:flex;gap:6px;overflow-x:auto;padding:10px;border-bottom:1px solid var(--line)}.tab{border:0;background:transparent;color:var(--sub);padding:9px 12px;border-radius:999px;cursor:pointer;font-weight:600;white-space:nowrap}.tab.active{background:#e8f0fe;color:var(--blue)}.addList{color:var(--blue)}
+.addBox{display:grid;grid-template-columns:34px 1fr 88px;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}.plus{color:var(--blue);font-size:26px;text-align:center}
+input,textarea,button,select{font:inherit}.taskInput{border:0;outline:0;font-size:15px;padding:10px 0;background:transparent;width:100%}
+.primary{border:0;border-radius:999px;background:var(--blue);color:#fff;padding:9px 16px;cursor:pointer;font-weight:700}.controls{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;color:var(--sub);font-size:13px;border-bottom:1px solid var(--line);flex-wrap:wrap}.controlRight{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.toggle,.textBtn{border:0;background:transparent;color:var(--blue);cursor:pointer;font-weight:700;padding:8px 4px}.sortSelect{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;color:var(--sub)}
+.tasks{min-height:180px}.task{display:grid;grid-template-columns:42px 1fr 42px;gap:2px;padding:10px;border-bottom:1px solid #edf0f2;background:#fff}.task:hover{background:#fcfcfc}.task.dragging{opacity:.45}
+.check{width:22px;height:22px;border:2px solid #80868b;border-radius:50%;margin:8px auto;background:#fff;cursor:pointer}.check.done{border-color:var(--green);background:var(--green);color:#fff;display:grid;place-items:center}.check.done::before{content:"✓";font-size:14px;font-weight:700}
+.title{border:0;outline:0;background:transparent;width:100%;font-size:15px;padding:7px 0}.task.doneTask .title{text-decoration:line-through;color:var(--sub)}
+.details{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--sub);font-size:12px;margin-top:2px}.due{border:0;background:#f1f3f4;border-radius:999px;padding:5px 9px;color:var(--sub)}
+.note{border:0;outline:0;resize:vertical;width:100%;min-height:34px;background:#f8fafd;color:var(--sub);font-size:13px;padding:8px 10px;border-radius:10px;display:none;margin-top:6px}.note.show{display:block}
+.noteActions{display:flex;gap:8px;margin-top:4px}.smallLink{border:0;background:transparent;color:var(--blue);font-size:12px;cursor:pointer;padding:4px 0}.dangerText{color:var(--danger)}
+.more{border:0;background:transparent;border-radius:50%;cursor:pointer;font-size:18px;color:var(--sub)}.more:hover{background:var(--hover)}
+.handle{cursor:grab;color:#b8bdc3;font-size:18px;padding-top:7px;text-align:center}.handle.disabled{cursor:default;opacity:.25}
+.subtasks{margin-top:8px;display:grid;gap:6px}.subtask{display:grid;grid-template-columns:28px 1fr 28px;align-items:center;background:#f8fafd;border-radius:10px;padding:4px}.subtask input{border:0;background:transparent;outline:0;font-size:13px;padding:6px}
+.smallCheck{width:16px;height:16px;border:2px solid #9aa0a6;border-radius:50%;margin:auto;cursor:pointer;background:#fff}.smallCheck.done{background:var(--green);border-color:var(--green)}.smallDelete{border:0;background:transparent;color:var(--sub);cursor:pointer;font-size:16px}.smallDelete:hover{color:var(--danger)}.addSub{border:0;background:transparent;color:var(--blue);font-size:13px;cursor:pointer;padding:6px 0;text-align:left}
+.empty{text-align:center;color:var(--sub);padding:42px 16px}.status{margin-bottom:12px;padding:9px 12px;border-radius:12px;background:#e8f0fe;color:#174ea6;font-size:13px;font-weight:700}.status.err{background:#fce8e6;color:#a50e0e}
+.dialogBg{position:fixed;inset:0;background:rgba(32,33,36,.35);display:none;place-items:center;padding:16px;z-index:10}.dialog{width:min(460px,100%);background:#fff;border-radius:18px;padding:18px;box-shadow:0 8px 28px rgba(0,0,0,.2)}.dialog h2{margin:0 0 12px;font-size:20px;font-weight:500}.dialog input{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px}.dialogActions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.listManage{display:grid;gap:8px;margin-top:10px}.listRow{display:grid;grid-template-columns:38px 1fr 38px 38px;gap:6px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff}.listRow.dragging{opacity:.45}.listRow input{border:0;outline:0;background:#f8fafd;border-radius:10px;padding:9px}.moveHandle{border:0;background:#eef2f7;border-radius:10px;cursor:grab;color:#64748b}.dangerBtn{border:0;background:#fee2e2;color:var(--danger);border-radius:10px;cursor:pointer;font-weight:700;padding:9px}
+@media(max-width:640px){.app{padding:12px 8px 36px}.card{border-radius:14px}.addBox{grid-template-columns:30px 1fr 76px}.primary{padding:9px 12px}.task{grid-template-columns:38px 1fr 38px}.controlRight{width:100%;justify-content:space-between}.sortSelect{flex:1}}
 </style>
 </head>
 <body>
 <main class="app">
   <div class="header">
-    <div class="brand">
-      <div class="logo">✓</div>
-      <div>
-        <h1>Tasks</h1>
-        <div id="syncText" class="sync">起動中...</div>
-      </div>
-    </div>
-    <button id="reloadBtn" class="iconbtn" title="再読込">↻</button>
+    <div class="brand"><div class="logo">✓</div><div><h1>Tasks</h1><div id="syncText" class="sync">起動中...</div></div></div>
+    <button id="manageListsBtn" class="iconbtn" title="リスト管理">☰</button>
   </div>
-
   <div id="status" class="status">DB接続中...</div>
-
   <section class="card">
     <div class="lists" id="listTabs"></div>
-
-    <div class="addBox">
-      <div class="plus">＋</div>
-      <input id="taskInput" class="taskInput" placeholder="タスクを追加">
-      <button id="addTaskBtn" class="primary">追加</button>
-    </div>
-
-    <div class="controls">
-      <span id="countText">0件</span>
-      <button id="toggleDoneBtn" class="toggle">完了済みを表示</button>
-    </div>
-
+    <div class="addBox"><div class="plus">＋</div><input id="taskInput" class="taskInput" placeholder="タスクを追加"><button id="addTaskBtn" class="primary">追加</button></div>
+    <div class="controls"><span id="countText">0件</span><div class="controlRight"><select id="sortMode" class="sortSelect"><option value="manual">手動順</option><option value="due">期限順</option></select><button id="toggleDoneBtn" class="toggle">完了済みを表示</button></div></div>
     <div id="tasks" class="tasks"></div>
   </section>
 </main>
-
-<div id="dialogBg" class="dialogBg">
-  <div class="dialog">
-    <h2>リストを追加</h2>
-    <input id="listNameInput" placeholder="リスト名">
-    <div class="dialogActions">
-      <button id="cancelListBtn" class="textBtn">キャンセル</button>
-      <button id="saveListBtn" class="primary">追加</button>
-    </div>
-  </div>
-</div>
-
+<div id="addListDialog" class="dialogBg"><div class="dialog"><h2>リストを追加</h2><input id="listNameInput" placeholder="リスト名"><div class="dialogActions"><button id="cancelListBtn" class="textBtn">キャンセル</button><button id="saveListBtn" class="primary">追加</button></div></div></div>
+<div id="manageDialog" class="dialogBg"><div class="dialog"><h2>リスト管理</h2><div id="listManage" class="listManage"></div><div class="dialogActions"><button id="closeManageBtn" class="primary">閉じる</button></div></div></div>
 <script>
 const SUPABASE_URL = "https://pbyadwhnbocdnblqonki.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_zyatIpbaMCb6m3YkqjrXjA_3Ih4uivT";
 
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = id => document.getElementById(id);
-
-let lists = [];
-let tasks = [];
+let lists = [], tasks = [];
 let selectedListId = localStorage.getItem("tasks.selectedListId");
 let showDone = localStorage.getItem("tasks.showDone") === "true";
-let draggingId = null;
-let editing = false;
+let sortMode = localStorage.getItem("tasks.sortMode") || "manual";
+let draggingTaskId = null, draggingListId = null, editing = false;
 
-$("reloadBtn").onclick = loadAll;
 $("addTaskBtn").onclick = addTask;
 $("taskInput").addEventListener("keydown", e => { if(e.key === "Enter") addTask(); });
-$("toggleDoneBtn").onclick = () => {
-  showDone = !showDone;
-  localStorage.setItem("tasks.showDone", String(showDone));
-  renderTasks();
-};
-$("cancelListBtn").onclick = closeDialog;
+$("toggleDoneBtn").onclick = () => { showDone = !showDone; localStorage.setItem("tasks.showDone", String(showDone)); renderTasks(); };
+$("sortMode").value = sortMode;
+$("sortMode").onchange = () => { sortMode = $("sortMode").value; localStorage.setItem("tasks.sortMode", sortMode); renderTasks(); };
+$("cancelListBtn").onclick = closeAddDialog;
 $("saveListBtn").onclick = addList;
 $("listNameInput").addEventListener("keydown", e => { if(e.key === "Enter") addList(); });
+$("manageListsBtn").onclick = openManageDialog;
+$("closeManageBtn").onclick = closeManageDialog;
 
 loadAll();
-setInterval(() => { if(!editing && !draggingId) loadTasks(false); }, 3000);
+setInterval(() => { if(!editing && !draggingTaskId && !draggingListId) loadTasks(false); }, 3000);
 
-function setStatus(msg, err=false){
-  $("status").textContent = msg;
-  $("syncText").textContent = msg;
-  $("status").classList.toggle("err", err);
-}
+function setStatus(msg, err=false){ $("status").textContent = msg; $("syncText").textContent = msg; $("status").classList.toggle("err", err); }
 
 async function loadAll(){
   try{
@@ -152,11 +84,7 @@ async function loadAll(){
     if(error) throw error;
     lists = data || [];
     if(lists.length === 0){
-      await client.from("todo_lists").insert([
-        { name:"マイタスク", sort_order:1 },
-        { name:"買い物", sort_order:2 },
-        { name:"仕事", sort_order:3 }
-      ]);
+      await client.from("todo_lists").insert([{ name:"マイタスク", sort_order:1 },{ name:"買い物", sort_order:2 },{ name:"仕事", sort_order:3 }]);
       return loadAll();
     }
     if(!selectedListId || !lists.some(l => l.id === selectedListId)){
@@ -164,11 +92,10 @@ async function loadAll(){
       localStorage.setItem("tasks.selectedListId", selectedListId);
     }
     renderLists();
+    if($("manageDialog").style.display === "grid") renderManageLists();
     await loadTasks(false);
     setStatus("同期済み");
-  }catch(e){
-    setStatus("エラー: " + e.message, true);
-  }
+  }catch(e){ setStatus("エラー: " + e.message, true); }
 }
 
 async function loadTasks(show=true){
@@ -185,230 +112,161 @@ async function loadTasks(show=true){
   if(show) setStatus("同期済み");
 }
 
+function visibleTasks(){
+  let v = showDone ? [...tasks] : tasks.filter(t => !t.done);
+  if(sortMode === "due"){
+    v.sort((a,b) => {
+      const ad = a.due_date || "9999-12-31";
+      const bd = b.due_date || "9999-12-31";
+      if(ad !== bd) return ad.localeCompare(bd);
+      return (a.sort_order || 0) - (b.sort_order || 0);
+    });
+  }else v.sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0));
+  return v;
+}
+
 function renderLists(){
-  const box = $("listTabs");
-  box.innerHTML = "";
+  const box = $("listTabs"); box.innerHTML = "";
   lists.forEach(list => {
     const b = document.createElement("button");
     b.className = "tab" + (list.id === selectedListId ? " active" : "");
     b.textContent = list.name;
-    b.onclick = async () => {
-      selectedListId = list.id;
-      localStorage.setItem("tasks.selectedListId", selectedListId);
-      renderLists();
-      await loadTasks();
-    };
+    b.onclick = async () => { selectedListId = list.id; localStorage.setItem("tasks.selectedListId", selectedListId); renderLists(); await loadTasks(); };
     box.appendChild(b);
   });
   const add = document.createElement("button");
-  add.className = "tab addList";
-  add.textContent = "＋ 新しいリスト";
-  add.onclick = openDialog;
-  box.appendChild(add);
+  add.className = "tab addList"; add.textContent = "＋ 新しいリスト"; add.onclick = openAddDialog; box.appendChild(add);
 }
 
 function renderTasks(){
-  const box = $("tasks");
-  const visible = showDone ? tasks : tasks.filter(t => !t.done);
+  const box = $("tasks"), v = visibleTasks();
   const remaining = tasks.filter(t => !t.done).length;
   $("countText").textContent = `未完了 ${remaining}件 / 全${tasks.length}件`;
   $("toggleDoneBtn").textContent = showDone ? "完了済みを非表示" : "完了済みを表示";
   box.innerHTML = "";
-
-  if(visible.length === 0){
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = showDone ? "タスクなし" : "未完了タスクなし";
-    box.appendChild(empty);
-    return;
-  }
-
-  visible.forEach(task => box.appendChild(createTaskRow(task)));
+  if(v.length === 0){ const empty = document.createElement("div"); empty.className = "empty"; empty.textContent = showDone ? "タスクなし" : "未完了タスクなし"; box.appendChild(empty); return; }
+  v.forEach(task => box.appendChild(createTaskRow(task)));
 }
 
 function createTaskRow(task){
   const row = document.createElement("div");
   row.className = "task" + (task.done ? " doneTask" : "");
-  row.draggable = true;
-  row.dataset.id = task.id;
+  row.draggable = sortMode === "manual"; row.dataset.id = task.id;
 
   const left = document.createElement("div");
-  const check = document.createElement("button");
-  check.className = "check" + (task.done ? " done" : "");
-  check.onclick = () => toggleTaskDone(task);
-  left.appendChild(check);
+  const check = document.createElement("button"); check.className = "check" + (task.done ? " done" : ""); check.onclick = () => toggleTaskDone(task); left.appendChild(check);
 
   const main = document.createElement("div");
-
-  const title = document.createElement("input");
-  title.className = "title";
-  title.value = task.title;
-  title.placeholder = "タスク名";
+  const title = document.createElement("input"); title.className = "title"; title.value = task.title; title.placeholder = "タスク名";
   title.onfocus = () => editing = true;
-  title.onblur = async () => {
-    editing = false;
-    const v = title.value.trim() || "無題";
-    if(v !== task.title) await updateTask(task.id, { title:v });
-  };
+  title.onblur = async () => { editing = false; const val = title.value.trim() || "無題"; if(val !== task.title) await updateTask(task.id, { title:val }); };
   title.addEventListener("keydown", e => { if(e.key === "Enter") title.blur(); });
   main.appendChild(title);
 
-  const details = document.createElement("div");
-  details.className = "details";
-  const due = document.createElement("input");
-  due.type = "date";
-  due.className = "due";
-  due.value = task.due_date || "";
-  due.onchange = async () => updateTask(task.id, { due_date: due.value || null });
-  details.appendChild(due);
-  main.appendChild(details);
+  const details = document.createElement("div"); details.className = "details";
+  const due = document.createElement("input"); due.type = "date"; due.className = "due"; due.value = task.due_date || ""; due.onchange = async () => updateTask(task.id, { due_date: due.value || null });
+  details.appendChild(due); main.appendChild(details);
 
-  const note = document.createElement("textarea");
-  note.className = "note";
-  note.placeholder = "詳細を追加";
-  note.value = task.notes || "";
+  const hasNote = !!(task.notes || "").trim();
+  const note = document.createElement("textarea"); note.className = "note" + (hasNote ? " show" : ""); note.placeholder = "詳細を追加"; note.value = task.notes || "";
   note.onfocus = () => editing = true;
-  note.onblur = async () => {
-    editing = false;
-    if(note.value !== (task.notes || "")) await updateTask(task.id, { notes: note.value });
-  };
+  note.onblur = async () => { editing = false; if(note.value !== (task.notes || "")) await updateTask(task.id, { notes: note.value }); };
   main.appendChild(note);
 
-  const subs = document.createElement("div");
-  subs.className = "subtasks";
+  const noteActions = document.createElement("div"); noteActions.className = "noteActions";
+  const toggleNote = document.createElement("button"); toggleNote.className = "smallLink"; toggleNote.textContent = hasNote ? "詳細を編集" : "詳細を追加"; toggleNote.onclick = () => { note.classList.toggle("show"); if(note.classList.contains("show")) note.focus(); };
+  const clearNote = document.createElement("button"); clearNote.className = "smallLink dangerText"; clearNote.textContent = "詳細削除"; clearNote.style.display = hasNote ? "inline-block" : "none"; clearNote.onclick = async () => { if(confirm("詳細を削除しますか？")) await updateTask(task.id, { notes:"" }); };
+  noteActions.append(toggleNote, clearNote); main.appendChild(noteActions);
+
+  const subs = document.createElement("div"); subs.className = "subtasks";
   (task.subtasks || []).forEach(st => subs.appendChild(createSubtaskRow(st)));
-  const addSub = document.createElement("button");
-  addSub.className = "addSub";
-  addSub.textContent = "＋ サブタスクを追加";
-  addSub.onclick = async () => {
-    const title = prompt("サブタスク名");
-    if(!title) return;
-    await client.from("subtasks").insert({ todo_id: task.id, title });
-    await loadTasks(false);
-  };
-  subs.appendChild(addSub);
-  main.appendChild(subs);
+  const addSub = document.createElement("button"); addSub.className = "addSub"; addSub.textContent = "＋ サブタスクを追加";
+  addSub.onclick = async () => { const val = prompt("サブタスク名"); if(!val) return; await client.from("subtasks").insert({ todo_id: task.id, title: val }); await loadTasks(false); };
+  subs.appendChild(addSub); main.appendChild(subs);
 
   const right = document.createElement("div");
-  const handle = document.createElement("div");
-  handle.className = "handle";
-  handle.textContent = "⋮⋮";
-  const del = document.createElement("button");
-  del.className = "more";
-  del.textContent = "×";
-  del.title = "削除";
-  del.onclick = () => deleteTask(task.id);
+  const handle = document.createElement("div"); handle.className = "handle" + (sortMode !== "manual" ? " disabled" : ""); handle.textContent = "⋮⋮";
+  const del = document.createElement("button"); del.className = "more"; del.textContent = "×"; del.onclick = () => deleteTask(task.id);
   right.append(handle, del);
-
   row.append(left, main, right);
 
-  row.addEventListener("dragstart", () => { draggingId = task.id; row.classList.add("dragging"); });
-  row.addEventListener("dragend", async () => { row.classList.remove("dragging"); await saveOrder(); draggingId = null; });
-  row.addEventListener("dragover", e => {
-    e.preventDefault();
-    const dragging = $("tasks").querySelector(".dragging");
-    if(!dragging || dragging === row) return;
-    const rect = row.getBoundingClientRect();
-    $("tasks").insertBefore(dragging, e.clientY > rect.top + rect.height/2 ? row.nextSibling : row);
-  });
-
+  if(sortMode === "manual"){
+    row.addEventListener("dragstart", () => { draggingTaskId = task.id; row.classList.add("dragging"); });
+    row.addEventListener("dragend", async () => { row.classList.remove("dragging"); await saveTaskOrder(); draggingTaskId = null; });
+    row.addEventListener("dragover", e => {
+      e.preventDefault();
+      const dragging = $("tasks").querySelector(".dragging");
+      if(!dragging || dragging === row) return;
+      const rect = row.getBoundingClientRect();
+      $("tasks").insertBefore(dragging, e.clientY > rect.top + rect.height/2 ? row.nextSibling : row);
+    });
+  }
   return row;
 }
 
 function createSubtaskRow(st){
-  const row = document.createElement("div");
-  row.className = "subtask";
-
-  const check = document.createElement("button");
-  check.className = "smallCheck" + (st.done ? " done" : "");
-  check.onclick = async () => {
-    await client.from("subtasks").update({ done: !st.done }).eq("id", st.id);
-    await loadTasks(false);
-  };
-
-  const input = document.createElement("input");
-  input.value = st.title;
-  input.onfocus = () => editing = true;
-  input.onblur = async () => {
-    editing = false;
-    const v = input.value.trim() || "無題";
-    if(v !== st.title){
-      await client.from("subtasks").update({ title:v }).eq("id", st.id);
-      await loadTasks(false);
-    }
-  };
-
-  const del = document.createElement("button");
-  del.className = "smallDelete";
-  del.textContent = "×";
-  del.onclick = async () => {
-    await client.from("subtasks").delete().eq("id", st.id);
-    await loadTasks(false);
-  };
-
-  row.append(check, input, del);
-  return row;
+  const row = document.createElement("div"); row.className = "subtask";
+  const check = document.createElement("button"); check.className = "smallCheck" + (st.done ? " done" : ""); check.onclick = async () => { await client.from("subtasks").update({ done: !st.done }).eq("id", st.id); await loadTasks(false); };
+  const input = document.createElement("input"); input.value = st.title; input.onfocus = () => editing = true; input.onblur = async () => { editing = false; const v = input.value.trim() || "無題"; if(v !== st.title){ await client.from("subtasks").update({ title:v }).eq("id", st.id); await loadTasks(false); } };
+  const del = document.createElement("button"); del.className = "smallDelete"; del.textContent = "×"; del.onclick = async () => { await client.from("subtasks").delete().eq("id", st.id); await loadTasks(false); };
+  row.append(check, input, del); return row;
 }
 
 async function addTask(){
-  const title = $("taskInput").value.trim();
-  if(!title || !selectedListId) return;
+  const title = $("taskInput").value.trim(); if(!title || !selectedListId) return;
   const max = tasks.length ? Math.max(...tasks.map(t => t.sort_order || 0)) : 0;
-  const { error } = await client.from("todos").insert({
-    list_id:selectedListId,
-    title,
-    sort_order:max+1,
-    done:false
-  });
+  const { error } = await client.from("todos").insert({ list_id:selectedListId, title, sort_order:max+1, done:false });
   if(error){ setStatus("追加エラー: " + error.message, true); return; }
-  $("taskInput").value = "";
-  await loadTasks();
+  $("taskInput").value = ""; await loadTasks();
 }
 
-async function toggleTaskDone(task){
-  await updateTask(task.id, { done: !task.done, completed_at: task.done ? null : new Date().toISOString() });
-}
+async function toggleTaskDone(task){ await updateTask(task.id, { done: !task.done, completed_at: task.done ? null : new Date().toISOString() }); }
+async function updateTask(id, values){ const { error } = await client.from("todos").update(values).eq("id", id); if(error){ setStatus("更新エラー: " + error.message, true); return; } await loadTasks(false); }
+async function deleteTask(id){ if(!confirm("このタスクを削除しますか？")) return; const { error } = await client.from("todos").delete().eq("id", id); if(error){ setStatus("削除エラー: " + error.message, true); return; } await loadTasks(false); }
+async function saveTaskOrder(){ const ids = [...$("tasks").querySelectorAll(".task")].map(el => el.dataset.id); for(let i=0;i<ids.length;i++){ await client.from("todos").update({ sort_order:i+1 }).eq("id", ids[i]); } await loadTasks(false); }
 
-async function updateTask(id, values){
-  const { error } = await client.from("todos").update(values).eq("id", id);
-  if(error){ setStatus("更新エラー: " + error.message, true); return; }
-  await loadTasks(false);
-}
-
-async function deleteTask(id){
-  if(!confirm("このタスクを削除しますか？")) return;
-  const { error } = await client.from("todos").delete().eq("id", id);
-  if(error){ setStatus("削除エラー: " + error.message, true); return; }
-  await loadTasks(false);
-}
-
-async function saveOrder(){
-  const ids = [...$("tasks").querySelectorAll(".task")].map(el => el.dataset.id);
-  for(let i=0;i<ids.length;i++){
-    await client.from("todos").update({ sort_order:i+1 }).eq("id", ids[i]);
-  }
-  await loadTasks(false);
-}
-
-function openDialog(){
-  $("dialogBg").style.display = "grid";
-  $("listNameInput").value = "";
-  setTimeout(() => $("listNameInput").focus(), 0);
-}
-
-function closeDialog(){
-  $("dialogBg").style.display = "none";
-}
+function openAddDialog(){ $("addListDialog").style.display = "grid"; $("listNameInput").value = ""; setTimeout(() => $("listNameInput").focus(), 0); }
+function closeAddDialog(){ $("addListDialog").style.display = "none"; }
 
 async function addList(){
-  const name = $("listNameInput").value.trim();
-  if(!name) return;
+  const name = $("listNameInput").value.trim(); if(!name) return;
   const max = lists.length ? Math.max(...lists.map(l => l.sort_order || 0)) : 0;
   const { data, error } = await client.from("todo_lists").insert({ name, sort_order:max+1 }).select();
   if(error){ setStatus("リスト追加エラー: " + error.message, true); return; }
-  selectedListId = data[0].id;
-  localStorage.setItem("tasks.selectedListId", selectedListId);
-  closeDialog();
+  selectedListId = data[0].id; localStorage.setItem("tasks.selectedListId", selectedListId); closeAddDialog(); await loadAll();
+}
+
+function openManageDialog(){ $("manageDialog").style.display = "grid"; renderManageLists(); }
+function closeManageDialog(){ $("manageDialog").style.display = "none"; }
+
+function renderManageLists(){
+  const box = $("listManage"); box.innerHTML = "";
+  lists.forEach(list => {
+    const row = document.createElement("div"); row.className = "listRow"; row.draggable = true; row.dataset.id = list.id;
+    const handle = document.createElement("button"); handle.className = "moveHandle"; handle.textContent = "≡";
+    const input = document.createElement("input"); input.value = list.name; input.onfocus = () => editing = true; input.onblur = async () => { editing = false; const name = input.value.trim() || "無題"; if(name !== list.name){ await client.from("todo_lists").update({ name }).eq("id", list.id); await loadAll(); } }; input.addEventListener("keydown", e => { if(e.key === "Enter") input.blur(); });
+    const selectBtn = document.createElement("button"); selectBtn.className = "moveHandle"; selectBtn.textContent = "→"; selectBtn.onclick = async () => { selectedListId = list.id; localStorage.setItem("tasks.selectedListId", selectedListId); closeManageDialog(); renderLists(); await loadTasks(); };
+    const del = document.createElement("button"); del.className = "dangerBtn"; del.textContent = "×"; del.onclick = async () => deleteList(list.id, list.name);
+    row.append(handle, input, selectBtn, del);
+    row.addEventListener("dragstart", () => { draggingListId = list.id; row.classList.add("dragging"); });
+    row.addEventListener("dragend", async () => { row.classList.remove("dragging"); await saveListOrder(); draggingListId = null; });
+    row.addEventListener("dragover", e => { e.preventDefault(); const dragging = $("listManage").querySelector(".dragging"); if(!dragging || dragging === row) return; const rect = row.getBoundingClientRect(); $("listManage").insertBefore(dragging, e.clientY > rect.top + rect.height/2 ? row.nextSibling : row); });
+    box.appendChild(row);
+  });
+}
+
+async function deleteList(id, name){
+  if(lists.length <= 1){ alert("最後の1リストは削除できません"); return; }
+  if(!confirm(`「${name}」を削除します。中のタスクも削除されます。`)) return;
+  const { error } = await client.from("todo_lists").delete().eq("id", id);
+  if(error){ setStatus("リスト削除エラー: " + error.message, true); return; }
+  if(selectedListId === id){ const next = lists.find(l => l.id !== id); selectedListId = next?.id || null; if(selectedListId) localStorage.setItem("tasks.selectedListId", selectedListId); }
+  await loadAll();
+}
+
+async function saveListOrder(){
+  const ids = [...$("listManage").querySelectorAll(".listRow")].map(el => el.dataset.id);
+  for(let i=0;i<ids.length;i++){ await client.from("todo_lists").update({ sort_order:i+1 }).eq("id", ids[i]); }
   await loadAll();
 }
 </script>
