@@ -38,8 +38,8 @@ input,button,select{font:inherit}.taskInput{border:0;outline:0;font-size:15px;pa
 <div id="addListDialog" class="dialogBg"><div class="dialog"><h2>リストを追加</h2><input id="listNameInput" placeholder="リスト名"><div class="dialogActions"><button id="cancelListBtn" class="textBtn">キャンセル</button><button id="saveListBtn" class="primary">追加</button></div></div></div>
 <div id="manageDialog" class="dialogBg"><div class="dialog"><h2>リスト管理</h2><div id="listManage" class="listManage"></div><div class="dialogActions"><button id="closeManageBtn" class="primary">閉じる</button></div></div></div>
 <script>
-const SUPABASE_URL = "ここを置換";
-const SUPABASE_ANON_KEY = "ここを置換";
+const SUPABASE_URL = "https://pbyadwhnbocdnblqonki.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_zyatIpbaMCb6m3YkqjrXjA_3Ih4uivT";
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = id => document.getElementById(id);
 let lists=[],tasks=[],selectedListId=localStorage.getItem("tasks.selectedListId"),showDone=localStorage.getItem("tasks.showDone")==="true",sortMode=localStorage.getItem("tasks.sortMode")||"manual",draggingTaskId=null,draggingListId=null,editing=false;
